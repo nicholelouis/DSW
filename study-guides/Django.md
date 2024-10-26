@@ -1,5 +1,5 @@
 # Django
-
+![img](../img/django.webp)
 ## Puesta en marcha
 
 - Crear carpeta
