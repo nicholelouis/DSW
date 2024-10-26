@@ -1,0 +1,20 @@
+{% extends "tasks/base.html" %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4" style="color: #2c3e50;">Delete Task</h1>
+    <div class="d-flex justify-content-center">
+        <div class="card shadow-lg p-4" style="width: 50%; background-color: #f0f4f8; border: none;">
+            <div class="card-body text-center">
+                <h1 style="text-align: center;">Are you sure you want to delete "{{ task.name }}"?</h1>
+<form method="post">
+    {% csrf_token %}
+                        <a href="{% url 'tasks:home' %}" class="btn btn-lg" style="text-decoration: none; background-color: #2c3e50; color: #f0f4f8;" >↩️ back</a>
+                        <input type="submit" class="btn btn-primary btn-lg" style="background-color: #b82525; border: none;" value="Delete ☠️">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock body %}
+

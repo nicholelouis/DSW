@@ -1,0 +1,49 @@
+{% extends "tasks/base.html" %}
+{% block title %}TaskTrack | Home{% endblock title %}
+{% block body %}
+<div class="container mt-5">
+    {% for task in tasks %}
+    <div class="d-flex justify-content-center mb-4">
+        <div class="card shadow-lg rounded-lg" style="width: 60%; background-color: #f0f4f8; border: none;">
+            <div class="card-header text-white" style="background-color: #2c3e50;">
+                <h5 class="card-title d-flex justify-content-between align-items-center">
+                    {{ task.name }}
+                    {% if task.done %}
+                        <span class="badge bg-success">Completed ✅</span>
+                    {% else %}
+                        <span class="badge bg-danger">Pending</span>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text text-muted">{{ task.description|truncatewords:20 }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-grid gap-2 d-md-block">
+                        <a href="{% url 'tasks:edit-task' task.slug %}" class="btn btn-outline-primary">Edit</a>
+                        <a href="{% url 'tasks:task-delete' task.slug %}" class="btn btn-outline-danger">Delete</a>
+                        <a href="{% url 'tasks:toggle' task.slug %}" 
+                           class="btn {% if task.done %}btn-warning{% else %}btn-success{% endif %}">
+                           {% if task.done %}Uncheck{% else %}Check{% endif %}
+                        </a>
+                    </div>
+                    <a href="{% url 'tasks:task-detail' task.slug %}" class="text-end" style="text-decoration: none;">➕</a>
+                </div>
+                
+            </div>
+            <div class="card-footer text-muted" style="background-color: #dfe3ee;">
+                {% if task.complete_before %}
+                    <small>Complete by: {{ task.complete_before|date:"d/m/Y" }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <h1 class="text-center mb-4" style="color: #2c3e507a;">No tasks available</h1>
+    <div class="d-flex justify-content-center">
+    <a href="{% url 'tasks:add-task' %}" class="btn btn-lg text-center mb-4" style="text-decoration: none; background-color:#258626; color: #f0f4f8; text-align: center;" >Create one✨</a>
+</div>
+    {% endfor %}
+
+</div>
+{% endblock body %}
