@@ -2,45 +2,45 @@
 
 ## Puesta en marcha
 
-1. Crear carpeta
+- Crear carpeta
 ```python
 mkdir todo
 cd todo
 ```
-2. Crear entorno Virtual
+- Crear entorno Virtual
 ```python
 python -m venv .venv --prompt todo
 ```
 
-3. Activar entorno Virtual
+- Activar entorno Virtual
 ```python
 source .venv/bin/activate
 ```
 
-4. Intalar django
+- Intalar django
 ```python
-pip instal django
+pip install django
 ```
 
-5. Crear el proyecto
+- Crear el proyecto
 ```python
 django-admin startproject main .
 ```
 
-6. Todo okey
+- Todo okey
 ```python
 ./manage.py check
 ```
 
-7. Aplicar Migraciones
+- Aplicar Migraciones
 ```python
 ./manage.py migrate
 ./manage.py runserver 
 ```
 
-8. Crear usuario
+- Crear usuario
 ```python
-./manage.py createsuperuser 
+./manage.py createsuperuser
 ```
 
 ## Crear la app
@@ -65,7 +65,7 @@ INSTALLED_APPS = [
 
 ## Crear un modelo
 
-dentro de models.py creamos el modelos que es basicamente un objeto que SIEMPRE hereda de models.Model.
+dentro de models.py creamos el modelos que es basicamente un objeto que SIEMPRE hereda de models.Model
 
 ```python
 class Task(models.Model):
@@ -82,7 +82,7 @@ class Task(models.Model):
 
 ```python
 ./manage.py makemigrations
-$ ./manage.py migrate
+./manage.py migrate
 ```
 
 - Tipos de Campos que existen para el modelo
@@ -149,7 +149,7 @@ urlpatterns = [
     path('posts/', include('posts.urls'))
 ]
 ```
-(Recuerda importar el include‼️)
+Recuerda importar el include‼️
 
 ### Crea urls.py dentro de la app
 
@@ -231,7 +231,7 @@ def add_task(request):
             return redirect('tasks:home')
     return render(request, 'tasks/add.html', dict(form=form))
 ```
-(se puede retornar un render de una plantilla o un redirect hacia otra‼️)
+se puede retornar un render de una plantilla o un redirect hacia otra‼️
 
 - Ejemplo de un edit utilizando un formulario
 ```python
@@ -327,7 +327,7 @@ Todo lo que querramos que vaya dentro de nuestro body
 <h1>{{ post.title }}</h1>
 <p>{{ post.content }}</p>
 ```
-(Previamente pasadas desde las view correspondiente)
+Previamente pasadas desde las view correspondiente‼️
 
 - Bucle for
 ```python
@@ -338,7 +338,7 @@ Todo lo que querramos que vaya dentro de nuestro body
 </ul>
 ```
 
-se puede desempaquetar
+se puede desempaquetar ⤵️
 ```python
 <div class="points">
 {% for x, y in points %}
@@ -440,7 +440,7 @@ así se veria su template
 </form>
 ```
 **No olvidel el novalidate**‼️
-(Siempre llevan el {% csrf_token %})‼️
+Siempre llevan el {% csrf_token %}‼️
 
 - Ejemplo de un form de edición (la vista esta en las views 🆙)
 ```python
