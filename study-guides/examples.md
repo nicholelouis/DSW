@@ -259,3 +259,53 @@ def user_status(request, user_id):
 ```python
 <p>El usuario está: {{ is_active|yesno:"activo,inactivo" }}</p>
 ```
+
+## Botones
+
+View
+```python
+from django.shortcuts import render
+from .models import Post
+
+def post_list(request):
+    order = request.GET.get('order', 'desc')
+    
+    if order == 'asc':
+        posts = Post.objects.all().order_by('created_at')  
+    else:
+        posts = Post.objects.all().order_by('-created_at') 
+
+
+    return render(request, 'post_list.html', {'posts': posts})
+```
+
+template
+```python
+
+    <!-- Botones para ordenar -->
+    <a href="?order=desc">Ordenar por Más Reciente</a>
+    <a href="?order=asc">Ordenar por Más Antiguo</a>
+```
+
+url
+```python
+from django.urls import path
+from .views import post_list
+
+urlpatterns = [
+    path('', post_list, name='post_list'),
+]
+```
+
+Modelo
+```python
+from django.db import models
+
+class Post(models.Model):
+    title = models.CharField(max_length=100)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+```

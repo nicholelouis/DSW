@@ -473,4 +473,8 @@ urlpatterns = [
 {% load static %}
 ```
 
+## Hora
 
+```python
+TIME_ZONE = 'Atlantic/Canary'
+```
