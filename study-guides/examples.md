@@ -309,3 +309,64 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 ```
+
+# howdo/models.py
+
+from django.db import models
+
+class Tutorial(models.Model):
+    CATEGORY_CHOICES = [
+        ('Tech', 'Tecnología'),
+        ('Food', 'Cocina'),
+        ('DIY', 'Hazlo tú mismo'),
+        ('Other', 'Otro')
+    ]
+    
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+
+    def __str__(self):
+        return self.title
+
+# howdo/views.py
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Tutorial
+from .forms import TutorialForm
+
+def tutorial_list(request):
+    query = request.GET.get('q')         # Término de búsqueda
+    category = request.GET.get('category')  # Filtro por categoría
+
+    tutorials = Tutorial.objects.all()
+
+    if query:
+        tutorials = tutorials.filter(title__
+
+<h1>Tutoriales</h1>
+
+<!-- Búsqueda y filtro -->
+<form method="get" action="{% url 'tutorial_list' %}">
+    <input type="text" name="q" placeholder="Buscar..." value="{{ request.GET.q }}">
+    <select name="category">
+        <option value="">Todas las Categorías</option>
+        <option value="Tech">Tecnología</option>
+        <option value="Food">Cocina</option>
+        <option value="DIY">Hazlo tú mismo</option>
+        <option value="Other">Otro</option>
+    </select>
+    <button type="submit">Buscar</button>
+</form>
+
+<!-- Lista de tutoriales -->
+<ul>
+    {% for tutorial in tutorials %}
+        <li>
+            <a href="{% url 'tutorial_detail' tutorial.id %}">{{ tutorial.title }}</a>
+            <p>{{ tutorial.description }}</p>
+        </li>
+    {% endfor %}
+</ul>
