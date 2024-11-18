@@ -1,0 +1,33 @@
+{% extends "shared/base.html" %}
+{% block body %}
+<div class="container my-4">
+  <div class="d-flex justify-content-center mb-4">
+    <a href="{% url 'echos:add' %}" class="btn btn-cool btn-lg">Agregar Echo</a>
+  </div>
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      {% for echo in echos %}
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="card-title mb-0">{{ echo.user.username }}</h5>
+              <small class="text-muted">
+                Publicado: 
+                  {{ echo.created_at|date:"d M Y" }}
+              </small>
+            </div>
+            <p class="card-text">{{ echo.content | truncatewords:20 }}</p>
+            <div class="text-end">
+              <a href="{% url 'echos:echo-detail' echo.pk %}">
+                <i class="bi bi-plus-circle"></i>
+              </a>              
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-center">No hay echos disponibles.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock body %}

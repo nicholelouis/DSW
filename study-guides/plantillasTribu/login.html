@@ -1,0 +1,54 @@
+{% extends "shared/base.html" %}
+{% block title %}Iniciar Sesión{% endblock %}
+{% block body %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-center">
+        <div class="card shadow-lg p-4" style="width: 400px; background-color: #ffffff; border-radius: 10px;">
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                    <div class="text-center">
+                        <p >Ya estás logueado.</p>
+                        <a href="/" class="btn btn-cool">Ir al inicio</a>
+                    </div>
+                {% else %}
+                    <h2 class="text-center mb-4">Iniciar Sesión</h2>
+                    {% if form.errors %}
+                        <div class="alert alert-danger" role="alert">
+                            Nombre de usuario y contraseña no coinciden. Por favor, inténtalo de nuevo.
+                        </div>
+                    {% endif %}
+                    {% if next and next != '/' %}
+                        {% if user.is_authenticated %}
+                            <div class="alert alert-warning" role="alert">
+                                Tu cuenta no tiene acceso a esta página. Por favor, inicia sesión con una cuenta válida.
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info" role="alert">
+                                Por favor, inicia sesión para ver esta página.
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                    <form method="post" action="{% url 'login' %}" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.username.label_tag }}
+                            {{ form.username }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.password.label_tag }}
+                            {{ form.password }}
+                        </div>
+                        <input type="hidden" name="next" value="{{ next }}">
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-cool">Iniciar Sesión</button>
+                        </div>
+                    </form>
+                    <p class="text-center mt-3">
+                        ¿No tienes cuenta? <a href="{% url 'signup' %}" class="text-decoration-none">Crea una aquí</a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock body %}

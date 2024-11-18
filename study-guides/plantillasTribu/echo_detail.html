@@ -1,0 +1,50 @@
+{% extends "shared/base.html" %}
+{% block title %}Echo: {{ echo.content|truncatechars:50 }}{% endblock %}
+{% block body %}
+<div class="container my-4">
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title">{{ echo.content }}</h5>
+      <p class="text-muted">Publicado por: <strong>{{ echo.user }}</strong> el {{ echo.created_at|date:"d M Y" }}</p>
+      <div class="mt-2 d-flex justify-content-end">
+        {% if echo.user == user %}
+          <a href="{% url 'echos:edit-echo' echo.pk %}" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-pencil"></i></a>
+          <a href="{% url 'echos:echo-delete' echo.pk %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></a>
+        {% endif %}
+    </div>
+    </div>
+  </div>
+
+  <h2 class="mb-3">Waves</h2>
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      {% if waves %}
+        {% for wave in waves %}
+          <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+              <p class="card-text">{{ wave.content }}</p>
+              <footer class="blockquote-footer">
+                Comentado por: <strong>{{ wave.user }}</strong> el {{ wave.created_at|date:"d M Y" }}
+              </footer>
+              {% if wave.user == user %}
+              <div class="mt-2 d-flex justify-content-end">
+                <a href="{% url 'waves:edit-wave' wave.pk %}" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-pencil"></i></a>
+                <a href="{% url 'waves:delete-wave' wave.pk %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-center text-muted">No hay comentarios aún.</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="d-flex justify-content-center mt-4">
+    {% if waves_count > 5 %}
+      <a href="{% url 'echos:echo-waves' echo.pk %}" class="btn btn-cool me-2">Ver más waves</a>
+    {% endif %}
+    <a href="{% url 'echos:add-wave' echo.pk %}" class="btn btn-cool">Añadir wave</a>
+  </div>
+</div>
+{% endblock body %}

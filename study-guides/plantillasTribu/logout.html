@@ -1,0 +1,7 @@
+{% extends "shared/base.html" %}
+{% block body %}
+<form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <input type="submit" value="Logout">
+</form>
+{% endblock body %}
