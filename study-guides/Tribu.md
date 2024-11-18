@@ -611,3 +611,13 @@ urlpatterns = [
 
 **@me/**: esta url que redirige al detail del user autenticado tiene que estar por encima del user detail porque si no da error!
 
+**Recuerda activar el administrador**
+```python
+from django.contrib import admin
+from .models import Profile
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'bio']
+```
+
