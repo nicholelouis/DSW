@@ -17,7 +17,7 @@ just setup
 ### Crear las apps
 
 ```python
-./manage.py startapp 
+./manage.py startapp
 ```
 
 ## Crear los modelos
@@ -48,6 +48,7 @@ class Echo(models.Model):
 ```
 
 **get_absolute_url**: Función que devuelve la ruta absoluta de una instancia, en este caso seria el url del dtail de un echo en cuestión y sirve para los redirect de las view hacia un detail
+
 ```python
 return redirect(echo)
 ```
@@ -74,12 +75,12 @@ class Wave(models.Model):
 ```
 
 - **ForeingKey**: Establece relación de uno a muchos entre modelos, aquí relacionamos un Wave a un solo Echo
-     - **related_name**: NO OLVIDAR, con el llamamos a todos los waves que tiene un Echo especifico, plural
-    ```python
-        echo_instance.waves.all()
-    ```
-    - **on_delete=models.CASCADE**: Si se borra el Echo se borran todos los Waves asociados
-    - **null=False**: Asegura que el campo no pueda ser nulo, osea sin un echo asociado no puede existir un wave
+  - **related_name**: NO OLVIDAR, con el llamamos a todos los waves que tiene un Echo especifico, plural
+  ```python
+      echo_instance.waves.all()
+  ```
+  - **on_delete=models.CASCADE**: Si se borra el Echo se borran todos los Waves asociados
+  - **null=False**: Asegura que el campo no pueda ser nulo, osea sin un echo asociado no puede existir un wave
 
 ### users.models
 
@@ -95,25 +96,29 @@ class Profile(models.Model):
     bio = models.TextField(blank=True)
 ```
 
-- **OneToOneField**: Relación uno a uno, un perfil solo puede pertenecer a un usuario y viceversa, es una manera de extender el modelo user predeterminado de django asociandolo de esta manera con otro modelo. 
-    - **Acceso Bidirecional**: user.profile / profile.user
+- **OneToOneField**: Relación uno a uno, un perfil solo puede pertenecer a un usuario y viceversa, es una manera de extender el modelo user predeterminado de django asociandolo de esta manera con otro modelo.
+
+  - **Acceso Bidirecional**: user.profile / profile.user
 
 - **Avatar**: Campo para cargar una imagen
-    - **upload_to**: define el donde se guadaran las imgs
-    - **default**: Si no se sube img utiliza esa por defecto
+  - **upload_to**: define el donde se guadaran las imgs
+  - **default**: Si no se sube img utiliza esa por defecto
     **HAY QUE AJUSTAR EL SETTINGS Y LAS URLS PARA QUE SE VEAN**
 
 Se llaman así en las plantillas ⤵️
+
 ```python
     <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="img-fluid rounded-circle shadow" style="width: 150px; height: 150px;">
 ```
-    
+
 En las urls de primer nivel ⤵️
+
 ```python
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ```
 
 En los settings ⤵️
+
 ```python
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
@@ -138,6 +143,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
 ]
 ```
+
 **Shared va de primero**
 
 - Realizamos la migraciones y cargamos la data al project
@@ -153,6 +159,7 @@ just load-data
 Creamos el template base.html dentro de templates/shared y el styles.css dentro de static/shared
 
 Para cargar los staticos y los imagenes en las url de primer nivel:
+
 ```python
 from django.conf.urls.static import static
 from django.conf import settings
@@ -160,7 +167,9 @@ from django.conf import settings
 
 + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ```
+
 para usarlos en las plantillas:
+
 ```python
 {% load static %} -> en el base
 
@@ -181,6 +190,7 @@ Login usamos el que nos proporciona django, pero los otros los implementamos nos
 Dentro de **templates/registration** ‼️
 
 ### Views
+
 ```python
 from django.contrib.auth import login, logout
 from django.shortcuts import redirect, render
@@ -192,8 +202,8 @@ def signup(request):
         form = SignupForm(request.POST)
         if form.is_valid():
             user = form.save()
-            Profile.objects.create(user=user) 
-            login(request, user) 
+            Profile.objects.create(user=user)
+            login(request, user)
             return redirect('echos:echo-list')
     else:
         form = SignupForm()
@@ -207,13 +217,14 @@ def logout_view(request):
 **Profile.objects.create(user=user)**: Cuando creamos un usuario en la vista de signup a su vez un creamos un profile vacio para que despues de error y sea mas facil manejarlo
 
 ### forms
+
 ```python
 from django import forms
 from django.contrib.auth import get_user_model
 
 class SignupForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
-    
+
     class Meta:
         model = get_user_model()
         fields = ['username', 'first_name', 'last_name', 'email', 'password']
@@ -227,6 +238,7 @@ class SignupForm(forms.ModelForm):
 ```
 
 ### urls PRIMER NIVEL
+
 ```python
 from accounts.views import logout_view, signup
 from django.contrib.auth.views import LoginView
@@ -237,11 +249,13 @@ path('login/', LoginView.as_view(), name='login'),
 path('logout/', logout_view, name='logout'),
 path('signup/', signup, name='signup'),
 ```
+
 - Del login utilizamos el de Django y los otros los importamos desde nuesta app accounts
 
 ### Dentro del settings añade:
 
 Que no se te olvide!
+
 ```python
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'echos:echo-list'
@@ -253,6 +267,7 @@ MEDIA_URL = '/media/'
 ## Echos app
 
 ### Views
+
 ```python
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
@@ -319,6 +334,7 @@ def echo_detele(request, echo_pk):
 
 **@auth_user**: un decorador creado por mi para verificar que el usuario que haga la petición sea el mismo sueño del echo al momento de modificarlo o borrarlo
 echos/decoradores.py
+
 ```python
 from django.http import HttpResponseForbidden
 from .models import Echo
@@ -337,6 +353,7 @@ def auth_user(func):
 si este no es igual devuelve un **HttpResponseForbidden** un 403
 
 ### Forms
+
 ```python
 from django import forms
 from .models import Echo
@@ -353,6 +370,7 @@ class EditEchoForm(forms.ModelForm):
 ```
 
 ### URLS
+
 ```python
 from django.urls import path
 from . import views
@@ -370,13 +388,17 @@ urlpatterns = [
     path('<int:echo_pk>/waves/add/', add_waves, name='add-wave'),
 ]
 ```
+
 **int:echo_pk**: Usamos el int como conver ya que estamos usando la pk del echo
 
 - URL de primer nivel ⤵️
+
 ```python
 path('echos/', include('echos.urls')),
 ```
+
 **Recuerda activar el administrador**
+
 ```python
 from django.contrib import admin
 from .models import Echo
@@ -389,6 +411,7 @@ class EchoAdmin(admin.ModelAdmin):
 ## Waves app
 
 ### Views
+
 ```python
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
@@ -437,6 +460,7 @@ def add_waves(request, echo_pk):
 ```
 
 **@auth_user**: decorador que hace lo mismo que el de arriba pero modificado para que funcione con las waves
+
 ```python
 from django.http import HttpResponseForbidden
 from .models import Wave
@@ -455,6 +479,7 @@ def auth_user(func):
 **Clave del echo desde el wave**: wave.echo.pk
 
 ### Forms
+
 ```python
 from django import forms
 from .models import Wave
@@ -471,6 +496,7 @@ class AddWaveForm(forms.ModelForm):
 ```
 
 ### URLS
+
 ```python
 from django.urls import path
 from . import views
@@ -484,11 +510,13 @@ urlpatterns = [
 ```
 
 - Urls de primer nivel
+
 ```python
 path('waves/', include('waves.urls')),
 ```
 
 **Recuerda activar el administrador**
+
 ```python
 from django.contrib import admin
 from .models import Wave
@@ -501,9 +529,10 @@ class WaveAdmin(admin.ModelAdmin):
 ## Users app
 
 ### View
+
 ```python
 from django.shortcuts import render, redirect
-from django.contrib.auth.models import User  
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from echos.models import Echo
 from .forms import EditProfileForm
@@ -561,7 +590,8 @@ def logged_user(request):
 
 - **get_object_or_404**: si no encuentra el objeto devuelve un 404
 
-- **@auth_user**: users/decoradores.py ⤵️ 
+- **@auth_user**: users/decoradores.py ⤵️
+
 ```python
 from django.http import HttpResponseForbidden
 
@@ -569,7 +599,7 @@ def auth_user(func):
     def wrapper(*args, **kwargs):
         request = args[0]
         user = request.user
-        username = kwargs.get('username')  
+        username = kwargs.get('username')
         if user.username != username:
             return HttpResponseForbidden('No tienes permiso para editar este perfil.')
         return func(*args, **kwargs)
@@ -577,9 +607,10 @@ def auth_user(func):
 ```
 
 ### Forms
+
 ```python
 from django import forms
-from .models import Profile 
+from .models import Profile
 
 class EditProfileForm(forms.ModelForm):
     class Meta:
@@ -594,6 +625,7 @@ class EditProfileForm(forms.ModelForm):
 ```
 
 ### URLS
+
 ```python
 from django.urls import path
 from . import views
@@ -606,12 +638,13 @@ urlpatterns = [
     path('<str:username>/', views.user_detail, name= 'user-detail'),
     path('<str:username>/edit/', views.edit_profile, name= 'edit-profile'),
     path('<str:username>/echos/', views.user_echos, name= 'user-echos'),
-] 
+]
 ```
 
 **@me/**: esta url que redirige al detail del user autenticado tiene que estar por encima del user detail porque si no da error!
 
 **Recuerda activar el administrador**
+
 ```python
 from django.contrib import admin
 from .models import Profile
@@ -621,3 +654,39 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'bio']
 ```
 
+### Autentica que el usuario es el dueño del echo sin decorador
+
+```python
+def edit_echo(request, echo_pk):
+    echo = get_object_or_404(Echo, pk=echo_pk)
+
+    if request.user != echo.user:
+        return HttpResponseForbidden('No tienes permiso para editar este echo.')
+
+    if request.method == 'POST':
+        form = EditEchoForm(request.POST, instance=echo)
+        if form.is_valid():
+            echo = form.save(commit=False)
+            echo.save()
+            return redirect(echo)
+    else:
+        form = EditEchoForm(instance=echo)
+
+    return render(request, 'echos/edit.html', {'echo': echo, 'form': form})
+```
+
+## Revisa lo que te dijo sergio‼️
+
+- Hacer el login con la infraestructura de Django y hacer logout/signup con la infraestructura propia me parece algo "extraño". O todo de una manera o todo de la otra.
+
+- Como buena práctica, todos los modelos deberían tener un **str**()
+
+- Un campo TextField() admite una cantidad arbitraria de texto. Si indicamos un max_length sólo servirá para el Textarea correspondiente.
+
+- null=False no se utiliza. Todos los campos son obligatorios hasta que se indique lo contrario.
+
+- Falta "related_name" es las claves ajenas al modelo User de Django.
+
+- Funciones como get_user() o get_echo() no deben estar en views.py, en todo caso en models.py o en otro fichero auxiliar.
+
+- No uses nombres en español: decoradores.py
