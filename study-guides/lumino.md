@@ -1114,3 +1114,153 @@ class MyAppConfig(AppConfig):
     def ready(self):
         import myapp.signals
 ```
+## Validación en formularios
+
+### Validación Individual
+
+La validación individual se aplica a campos específicos de un formulario. Es útil cuando quieres validar un único dato en función de sus propias restricciones.
+
+Ejemplo:
+Supongamos un formulario para registrar un estudiante con su nombre y edad:
+```python
+from django import forms
+
+class StudentForm(forms.Form):
+    name = forms.CharField(max_length=100)
+    age = forms.IntegerField()
+
+    # Validación individual para el campo 'age'
+    def clean_age(self):
+        age = self.cleaned_data.get('age')
+        if age < 0:
+            raise forms.ValidationError("La edad no puede ser negativa.")
+        return age
+```
+Cómo funciona:
+El método clean_<fieldname> se utiliza para definir la validación individual de un campo. En este caso, clean_age valida que la edad no sea negativa.
+Si se detecta un valor inválido, se lanza una excepción ValidationError, lo que muestra un mensaje de error al usuario.
+Cómo usarlo:
+```python
+form = StudentForm({'name': 'Juan', 'age': -5})
+if form.is_valid():
+    # Guardar los datos
+    print(form.cleaned_data)
+else:
+    print(form.errors)  # Output: {'age': ['La edad no puede ser negativa.']}
+```
+
+### Validación Cruzada
+
+La validación cruzada evalúa múltiples campos en conjunto. Se usa cuando la validación de un campo depende del valor de otro.
+
+Ejemplo:
+Supongamos que tienes un formulario para ingresar un rango de fechas (fecha de inicio y fecha de fin), y necesitas validar que la fecha de fin no sea anterior a la fecha de inicio:
+```python
+class DateRangeForm(forms.Form):
+    start_date = forms.DateField()
+    end_date = forms.DateField()
+
+    # Validación cruzada de múltiples campos
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+
+        if start_date and end_date and end_date < start_date:
+            raise forms.ValidationError("La fecha de fin no puede ser anterior a la fecha de inicio.")
+```
+
+Cómo funciona:
+El método clean (sin sufijo de campo) se utiliza para validar varios campos juntos.
+super().clean() asegura que primero se ejecuten las validaciones individuales antes de realizar la validación cruzada.
+Si los valores no cumplen con las condiciones, se lanza un ValidationError.
+Cómo usarlo:
+```python
+form = DateRangeForm({'start_date': '2025-01-10', 'end_date': '2025-01-05'})
+if form.is_valid():
+    # Guardar los datos
+    print(form.cleaned_data)
+else:
+    print(form.errors)  
+    # Output: {'__all__': ['La fecha de fin no puede ser anterior a la fecha de 
+```
+
+# Ejemplos
+```python
+# Crear instancias de Student y Course
+
+student1 = Student.objects.create(name="Juan")
+course1 = Course.objects.create(title="Matemáticas")
+
+# Crear la relación en el modelo intermedio
+
+enrollment = Enrollment.objects.create(student=student1, course=course1, grade=95)
+
+# Verificar la relación
+print(enrollment)  # Output: Juan enrolled in Matemáticas on 2025-01-14
+
+2. Consultar Relaciones Existentes
+Obtener los estudiantes inscritos en un curso:
+
+students_in_course = Enrollment.objects.filter(course=course1)
+for enrollment in students_in_course:
+    print(enrollment.student.name)
+# Output:
+# Juan
+Obtener los cursos en los que está inscrito un estudiante:
+
+courses_of_student = Enrollment.objects.filter(student=student1)
+for enrollment in courses_of_student:
+    print(enrollment.course.title)
+# Output:
+# Matemáticas
+3. Modificar una Relación Existente
+Puedes actualizar los datos de una relación utilizando el modelo intermedio. Por ejemplo, actualizar la calificación de un estudiante:
+
+# Obtener una inscripción existente
+enrollment = Enrollment.objects.get(student=student1, course=course1)
+
+# Actualizar la calificación
+enrollment.grade = 98
+enrollment.save()
+
+# Verificar los cambios
+print(enrollment.grade)  # Output: 98
+4. Eliminar una Relación
+Para eliminar una relación, simplemente eliminas la instancia del modelo intermedio correspondiente.
+
+# Eliminar la relación entre el estudiante y el curso
+enrollment = Enrollment.objects.get(student=student1, course=course1)
+enrollment.delete()
+
+# Verificar que la relación se eliminó
+students_in_course = Enrollment.objects.filter(course=course1)
+print(students_in_course)  # Output: <QuerySet []>
+5. Crear Relación con Campos Adicionales
+Si necesitas añadir más atributos al modelo intermedio (como una fecha de inscripción o calificación), lo haces directamente al momento de crear la relación:
+
+# Crear una inscripción con campos adicionales
+enrollment = Enrollment.objects.create(
+    student=student1,
+    course=course1,
+    grade=90,
+)
+
+print(enrollment)  # Output: Juan enrolled in Matemáticas on 2025-01-14
+6. Consultar Relaciones Usando QuerySets
+Filtrar estudiantes inscritos en un curso específico:
+
+students = Student.objects.filter(enrollments__course=course1)
+for student in students:
+    print(student.name)
+# Output:
+# Juan
+Filtrar cursos en los que un estudiante está inscrito:
+
+courses = Course.objects.filter(enrollments__student=student1)
+for course in courses:
+    print(course.title)
+# Output:
+# Matemáticas
+```
+
