@@ -518,3 +518,599 @@ def add_enrollment(request):
     <button type="submit">Add Enrollment</button>
 </form>
 ```
+
+## Guía de validadores
+
+1. Validaciones Básicas en Modelos
+
+Los modelos de Django incluyen validaciones automáticas basadas en los argumentos de los campos.
+
+Ejemplo de Validaciones en un Modelo:
+```python
+from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator, EmailValidator
+
+class Student(models.Model):
+    name = models.CharField(max_length=50)  # Limita el texto a 50 caracteres
+    age = models.PositiveIntegerField(
+        validators=[MinValueValidator(18), MaxValueValidator(100)]  # Edad entre 18 y 100
+    )
+    email = models.EmailField(
+        unique=True,
+        validators=[EmailValidator()]  # Verifica que el formato del correo sea válido
+    )
+    registration_date = models.DateField()
+
+    def __str__(self):
+        return self.name
+```
+Qué pasa aquí?
+max_length=50: Limita la longitud del texto.
+PositiveIntegerField: Solo permite valores enteros positivos.
+validators: Define validaciones adicionales para restricciones más específicas.
+unique=True: Asegura que el correo electrónico sea único.
+
+2. Validaciones en Formularios
+
+Django permite validar datos al procesar formularios (usando forms.Form o forms.ModelForm).
+
+Ejemplo de Validaciones en un Formulario:
+```python
+from django import forms
+from .models import Student
+
+class StudentForm(forms.ModelForm):
+    class Meta:
+        model = Student
+        fields = ['name', 'age', 'email', 'registration_date']
+
+    def clean_age(self):  # Validación personalizada para el campo "age"
+        age = self.cleaned_data.get('age')
+        if age < 18:
+            raise forms.ValidationError('La edad debe ser al menos 18 años.')
+        return age
+
+    def clean(self):  # Validación a nivel de formulario (campos relacionados)
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        if email and not email.endswith('@example.com'):
+            raise forms.ValidationError('El correo debe ser del dominio @example.com.')
+        return cleaned_data
+```
+
+Cómo Funciona?
+clean_<campo>: Valida un campo específico (en este caso, age).
+clean: Valida múltiples campos relacionados o lógica compleja.
+
+3. Validaciones Personalizadas
+
+Django permite agregar validaciones personalizadas a nivel de modelos y formularios.
+
+Ejemplo de Validación Personalizada en Modelos:
+```python
+from django.core.exceptions import ValidationError
+
+def validate_even(value):
+    if value % 2 != 0:
+        raise ValidationError(f'{value} no es un número par.')
+
+class Product(models.Model):
+    name = models.CharField(max_length=50)
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[validate_even])  # Solo precios pares
+```
+Cómo se utiliza?
+Define una función de validación (validate_even).
+Añádela al argumento validators del campo.
+
+4. Validaciones en Vistas
+
+Si usas vistas para manejar formularios, también puedes realizar validaciones personalizadas antes de guardar los datos.
+
+Ejemplo:
+```python
+from django.shortcuts import render
+from django.http import HttpResponse
+from .forms import StudentForm
+
+def add_student(request):
+    if request.method == 'POST':
+        form = StudentForm(request.POST)
+        if form.is_valid():  # Validaciones automáticas del formulario
+            student = form.save(commit=False)
+            if student.age < 18:
+                return HttpResponse("El estudiante debe ser mayor de edad.")
+            student.save()
+            return HttpResponse("Estudiante añadido correctamente.")
+    else:
+        form = StudentForm()
+    return render(request, 'add_student.html', {'form': form})
+```
+
+6. Validadores Incorporados de Django
+
+Django incluye varios validadores listos para usar que puedes aplicar a los campos.
+
+Validador	Descripción
+MaxValueValidator	-> Valida que el valor no sea mayor que el máximo.
+MinValueValidator	-> Valida que el valor no sea menor que el mínimo.
+EmailValidator	-> Valida que el formato sea un correo válido.
+RegexValidator	-> Valida que el valor coincida con una expresión regular.
+URLValidator	-> Valida que el valor sea una URL válida.
+FileExtensionValidator	-> Valida las extensiones de archivo permitidas.
+
+Ejemplo con RegexValidator:
+
+```python
+from django.core.validators import RegexValidator
+
+phone_validator = RegexValidator(r'^\+?1?\d{9,15}$', 'Número de teléfono inválido.')
+
+class Contact(models.Model):
+    phone_number = models.CharField(validators=[phone_validator], max_length=16)
+```
+## Guia de procesadores de contexto
+
+- Ejemplo 1: Agregar un mensaje global
+Crea un archivo para tus procesadores de contexto, por ejemplo: context_processors.py.
+
+```python
+# context_processors.py
+def global_message(request):
+    return {
+        'global_message': '¡Bienvenido a nuestra plataforma!'
+    }
+En este caso, el mensaje "¡Bienvenido a nuestra plataforma!" estará disponible en todas las plantillas como {{ global_message }}.
+```
+
+- Ejemplo 2: Agregar datos dinámicos
+Si necesitas enviar datos dinámicos (por ejemplo, todas las materias disponibles), puedes hacer esto:
+
+```python
+# context_processors.py
+from subjects.models import Subject
+
+def available_subjects(request):
+    subjects = Subject.objects.all()
+    return {
+        'subjects': subjects
+    }
+En este caso, la lista de materias estará disponible en todas las plantillas como {{ subjects }}.
+```
+
+3. Registrar un Procesador de Contexto
+
+Para que Django utilice tu procesador de contexto, debes registrarlo en la configuración del proyecto, en el archivo settings.py:
+```python
+# settings.py
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],  # Directorios de plantillas
+        'APP_DIRS': True,  # Activa la búsqueda de plantillas en cada app
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',  # Necesario para usar {{ request }}
+                'django.contrib.auth.context_processors.auth',  # Para {{ user }}
+                'django.contrib.messages.context_processors.messages',
+                'subjects.context_processors.available_subjects',  # Tu procesador
+                'subjects.context_processors.global_message',  # Otro procesador
+            ],
+        },
+    },
+]
+```
+4. Uso en Plantillas
+
+Una vez registrado, puedes acceder a los datos del procesador en cualquier plantilla:
+```html
+<!-- base.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mi Sitio</title>
+</head>
+<body>
+    <p>{{ global_message }}</p>
+
+    <h2>Materias disponibles:</h2>
+    <ul>
+        {% for subject in subjects %}
+            <li>{{ subject.name }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+```
+5. Ejemplo Avanzado: Procesador Basado en Roles
+
+Puedes usar un procesador de contexto para mostrar información dependiendo del rol del usuario:
+```python
+# context_processors.py
+
+def user_role_context(request):
+    if request.user.is_authenticated:
+        role = request.user.profile.role
+        return {
+            'is_teacher': role == 'T',
+            'is_student': role == 'S',
+        }
+    return {
+        'is_teacher': False,
+        'is_student': False,
+    }
+Uso en Plantillas:
+<!-- dashboard.html -->
+<h1>Dashboard</h1>
+{% if is_teacher %}
+    <p>Bienvenido, profesor. Aquí están tus cursos:</p>
+{% elif is_student %}
+    <p>Bienvenido, estudiante. Aquí están tus materias:</p>
+{% else %}
+    <p>Por favor, inicia sesión para acceder a la plataforma.</p>
+{% endif %}
+``` 
+
+## Guia de Tags
+
+Crear Tags Personalizados
+
+- Paso 1: Crear un Archivo para Tags
+Dentro de tu app, crea un directorio llamado templatetags.
+Dentro de este directorio, crea un archivo __init__.py (para que sea un paquete).
+Crea otro archivo, por ejemplo, custom_tags.py.
+Tu estructura debería verse así:
+
+myapp/
+    templatetags/
+        __init__.py
+        custom_tags.py
+
+- Paso 2: Registrar los Tags
+En el archivo custom_tags.py, importa las herramientas necesarias y registra tu biblioteca de tags:
+```python
+from django import template
+
+register = template.Library()
+```
+
+Ahora puedes crear tags personalizados.
+
+3. Crear un Tag Simple
+Un tag simple ejecuta una función y devuelve un valor directamente.
+
+Ejemplo: Capitalizar un Texto
+```python
+# templatetags/custom_tags.py
+
+@register.simple_tag
+def capitalize(text):
+    """Convierte el texto a mayúsculas."""
+    return text.upper()
+```
+En tu plantilla:
+```python
+{% load custom_tags %}
+
+<p>{% capitalize "hola mundo" %}</p>
+Salida:
+
+<p>HOLA MUNDO</p>
+```
+
+- 4. Crear un Tag con Lógica Compleja
+Para lógica más avanzada, usa @register.inclusion_tag. Este tipo de tag renderiza un fragmento de plantilla y puede pasarle un contexto específico.
+
+Ejemplo: Mostrar Lista de Materias
+
+```python
+# templatetags/custom_tags.py
+
+from subjects.models import Subject
+
+@register.inclusion_tag('subjects/subject_list.html')
+def show_subjects(limit=5):
+    """Muestra las materias disponibles, con un límite opcional."""
+    subjects = Subject.objects.all()[:limit]
+    return {'subjects': subjects}
+```
+Archivo de plantilla templates/subjects/subject_list.html:
+```python
+<ul>
+    {% for subject in subjects %}
+        <li>{{ subject.code }} - {{ subject.name }}</li>
+    {% endfor %}
+</ul>
+```
+En tu plantilla principal:
+```python
+{% load custom_tags %}
+
+<h1>Materias Disponibles</h1>
+{% show_subjects limit=3 %}
+```
+Esto generará una lista con las 3 primeras materias.
+
+- 5. Crear Filtros Personalizados
+Un filtro personalizado permite transformar un valor en otro. Por ejemplo, puedes crear un filtro que acorte el texto a una cantidad máxima de caracteres.
+
+Ejemplo: Acortar Texto
+```python
+# templatetags/custom_tags.py
+
+@register.filter
+def truncate_chars(value, max_length):
+    """Acorta un texto a una longitud máxima."""
+    if len(value) > max_length:
+        return value[:max_length] + "..."
+    return value
+```
+En tu plantilla:
+```python
+{% load custom_tags %}
+
+<p>{{ "Este es un texto muy largo" | truncate_chars:10 }}</p>
+Salida:
+
+<p>Este es...</p>
+```
+- 6. Agregar Variables al Tag
+
+Puedes pasarle múltiples argumentos a los tags.
+
+Ejemplo: Formatear Nombres
+```python
+# templatetags/custom_tags.py
+
+@register.simple_tag
+def format_name(first_name, last_name):
+    """Formatea un nombre completo."""
+    return f"{first_name.capitalize()} {last_name.capitalize()}"
+```
+En tu plantilla:
+```python
+{% load custom_tags %}
+
+<p>{% format_name "juan" "perez" %}</p>
+Salida:
+
+<p>Juan Perez</p>
+```
+### Ejemplo Completo
+```python
+# templatetags/custom_tags.py
+
+from django import template
+from subjects.models import Subject
+
+register = template.Library()
+
+@register.simple_tag
+def capitalize(text):
+    """Convierte el texto a mayúsculas."""
+    return text.upper()
+
+@register.filter
+def truncate_chars(value, max_length):
+    """Acorta un texto a una longitud máxima."""
+    if len(value) > max_length:
+        return value[:max_length] + "..."
+    return value
+
+@register.inclusion_tag('subjects/subject_list.html')
+def show_subjects(limit=5):
+    """Muestra las materias disponibles, con un límite opcional."""
+    subjects = Subject.objects.all()[:limit]
+    return {'subjects': subjects}
+```
+Archivo de plantilla templates/subjects/subject_list.html:
+```python
+<ul>
+    {% for subject in subjects %}
+        <li>{{ subject.code }} - {{ subject.name }}</li>
+    {% endfor %}
+</ul>
+```
+En tu plantilla principal:
+```python
+{% load custom_tags %}
+
+<h1>Materias Disponibles</h1>
+<p>{% capitalize "hola mundo" %}</p>
+<p>{{ "Texto muy largo para mostrar" | truncate_chars:15 }}</p>
+{% show_subjects limit=3 %}
+```
+
+## Guía de señales
+
+Señales Incorporadas en Django
+Django proporciona señales predefinidas como:
+
+- post_save: Enviada después de que se guarda un modelo.
+- pre_save: Enviada antes de que se guarde un modelo.
+- post_delete: Enviada después de que se elimina un modelo.
+- pre_delete: Enviada antes de que se elimine un modelo.
+- m2m_changed: Enviada cuando cambian relaciones Many-to-Many.
+
+3. Crear una Señal
+
+- Paso 1: Crear la Función de la Señal
+Primero, define una función que se ejecutará cuando se dispare la señal.
+```python
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from .models import Profile
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Crea un perfil automáticamente cuando se crea un usuario."""
+    if created:
+        Profile.objects.create(user=instance)
+```
+
+- Paso 2: Conectar la Señal
+Django conecta automáticamente las señales cuando usas el decorador @receiver. Sin embargo, si prefieres, puedes conectarla manualmente:
+```python
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from .models import Profile
+
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+post_save.connect(create_user_profile, sender=User)
+```
+4. ¿Dónde Colocar las Señales?
+
+Es una buena práctica colocar las señales en un archivo llamado signals.py dentro de tu aplicación. Luego, importa el archivo en el método ready() de la configuración de la aplicación (apps.py) para asegurarte de que las señales estén registradas.
+
+Estructura del Proyecto
+myapp/
+    apps.py
+    models.py
+    signals.py
+Ejemplo: Registrar Señales en apps.py
+```python
+# apps.py
+from django.apps import AppConfig
+
+class MyAppConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'myapp'
+
+    def ready(self):
+        import myapp.signals
+```
+5. Señales Comunes y Ejemplos
+
+- 5.1. Señal: post_save
+Usada para ejecutar código después de guardar un modelo.
+```python
+# signals.py
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from .models import Enrollment
+
+@receiver(post_save, sender=Enrollment)
+def notify_student_enrollment(sender, instance, created, **kwargs):
+    """Notifica al estudiante después de que se inscribe en una materia."""
+    if created:
+        print(f"Estudiante {instance.student} inscrito en {instance.subject}")
+```
+
+- 5.2. Señal: pre_save
+Usada para realizar acciones antes de guardar un modelo.
+```python
+# signals.py
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from .models import Subject
+
+@receiver(pre_save, sender=Subject)
+def capitalize_subject_name(sender, instance, **kwargs):
+    """Asegúrate de que el nombre del Subject esté capitalizado antes de guardarlo."""
+    instance.name = instance.name.capitalize()
+```
+
+- 5.3. Señal: post_delete
+Usada para ejecutar código después de eliminar un modelo.
+```python
+# signals.py
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+from .models import Profile
+
+@receiver(post_delete, sender=Profile)
+def cleanup_user(sender, instance, **kwargs):
+    """Elimina al usuario relacionado cuando se borra el perfil."""
+    instance.user.delete()
+```
+
+- 5.4. Señal: m2m_changed
+Usada para monitorear cambios en relaciones Many-to-Many.
+```python
+# signals.py
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+from .models import Enrollment
+
+@receiver(m2m_changed, sender=Enrollment)
+def track_enrollment_changes(sender, instance, action, **kwargs):
+    """Imprime un mensaje cuando cambian las inscripciones."""
+    if action == 'post_add':
+        print(f"Se añadieron estudiantes a {instance.subject}")
+```
+
+6. Crear Señales Personalizadas
+
+Puedes definir tus propias señales y usarlas donde necesites.
+
+Ejemplo: Señal Personalizada
+Define la Señal:
+```python
+from django.dispatch import Signal
+
+# Define una señal personalizada
+student_enrolled = Signal()
+```
+Conecta la Señal:
+```python
+from django.dispatch import receiver
+from .signals import student_enrolled
+
+@receiver(student_enrolled)
+def notify_teacher(sender, **kwargs):
+    """Notifica al profesor cuando un estudiante se inscribe."""
+    print(f"Estudiante inscrito: {kwargs['student_name']} en {kwargs['subject_name']}")
+```
+Envía la Señal:
+```python
+from .signals import student_enrolled
+
+# Envía la señal en algún lugar de tu código
+student_enrolled.send(sender=None, student_name="Juan Pérez", subject_name="Matemáticas")
+```
+### Ejemplo Completo
+
+Modelo:
+```python
+# models.py
+from django.db import models
+from django.contrib.auth.models import User
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    bio = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Perfil de {self.user.username}"
+```
+Señal:
+```python
+# signals.py
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from .models import Profile
+
+@receiver(post_save, sender=User)
+def create_profile(sender, instance, created, **kwargs):
+    """Crea automáticamente un perfil cuando se crea un usuario."""
+    if created:
+        Profile.objects.create(user=instance)
+```
+Registrar Señales:
+```python
+# apps.py
+from django.apps import AppConfig
+
+class MyAppConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'myapp'
+
+    def ready(self):
+        import myapp.signals
+```
