@@ -896,6 +896,17 @@ def render_document(request, docref):
     return render(
         request, 'documents/render.html', dict(doc=document, render_contents=render_contents)
     )
+
+
+from django.forms import ModelForm
+
+from .models import Document
+
+
+class EditDocumentForm(ModelForm):
+    class Meta:
+        model = Document
+        fields = ['title', 'contents']
 ```
 
 ### Helpers
@@ -990,4 +1001,16 @@ class CategoryAdmin(admin.ModelAdmin):
     ]
     prepopulated_fields = {'slug': ['name']}
 
+
+from django.urls import path
+
+from . import views
+
+app_name = 'documents'
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('<uuid:docref>/edit/', views.edit_document, name='edit_document'),
+    path('<uuid:docref>/', views.render_document, name='render_document'),
+]
 ```
