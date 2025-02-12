@@ -855,6 +855,49 @@ def required_fields(*fields):
     return decorator
 ```
 
+vistas
+
+```python
+import markdown
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
+
+from .forms import EditDocumentForm
+from .models import Document
+
+def home(request):
+    new_document = Document()
+    new_document.save()
+    return redirect(new_document.get_absolute_url())
+
+@require_http_methods(['GET', 'POST'])
+def edit_document(request, docref):
+    document = get_object_or_404(Document, ref=docref)
+    if request.method == 'POST':
+        form = EditDocumentForm(request.POST)
+        if form.is_valid():
+            new_title = form.cleaned_data['title']
+            new_contents = form.cleaned_data['contents']
+            document.title = new_title
+            document.contents = new_contents
+            document.save()
+            messages.add_message(request, messages.SUCCESS, 'Document was successfully saved!')
+        else:
+            messages.add_message(request, messages.ERROR, 'There are errors in form!')
+    else:
+        form = EditDocumentForm(instance=document)
+    return render(request, 'documents/edit.html', dict(form=form, doc=document))
+
+
+def render_document(request, docref):
+    document = get_object_or_404(Document, ref=docref)
+    render_contents = markdown.markdown(document.contents, extensions=['extra'])
+    return render(
+        request, 'documents/render.html', dict(doc=document, render_contents=render_contents)
+    )
+```
+
 ### Helpers
 
 ```python
@@ -894,3 +937,57 @@ Q es una clase de Django que permite construir consultas dinámicas y más compl
 
 Se usa cuando necesitas combinar múltiples condiciones en una consulta de base de datos de forma flexible.
 
+## Admin.py
+
+```python
+from django.contrib import admin
+
+from .models import Game, Review
+
+# Register your models here.
+
+
+@admin.register(Game)
+class GameAdmin(admin.ModelAdmin):
+    list_display = [
+        'title',
+        'description',
+        'cover',
+        'price',
+        'stock',
+        'released_at',
+        'pegi',
+        'category',
+    ]
+    filter_horizontal = ('platforms',)
+    prepopulated_fields = {'slug': ['title']}
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = [
+        'rating',
+        'comment',
+        'game',
+        'author',
+        'created_at', 
+        'updated_at',
+    ]
+
+from django.contrib import admin
+
+from .models import Category
+
+# Register your models here.
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'description',
+        'color',
+    ]
+    prepopulated_fields = {'slug': ['name']}
+
+```
