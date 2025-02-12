@@ -1013,4 +1013,10 @@ urlpatterns = [
     path('<uuid:docref>/edit/', views.edit_document, name='edit_document'),
     path('<uuid:docref>/', views.render_document, name='render_document'),
 ]
+
+    ref = models.UUIDField(unique=True, default=uuid.uuid4)
+    title = models.CharField(max_length=256, default='✨ New markdown document')
+    contents = models.TextField(blank=True, default='Hi there! This is **markdown** 👋')
+    created = models.DateTimeField(auto_now=True)
+    updated = models.DateTimeField(auto_now_add=True)
 ```
